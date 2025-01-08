@@ -14,7 +14,7 @@ const Footer = () => {
                 target="_blank"
                 rel="noreferrer"
               >
-                2HANDHHUB GROCERY GROUP 9
+                2HANDHUB GROCERY GROUP 9
               </a>
             </p>
             <a

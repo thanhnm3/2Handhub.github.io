@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { useAuth } from "../AuthContext";
 
 const Navbar = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const { loginStatus, logout } = useAuth();
   const state = useSelector((state) => state.handleCart);
   const navigate = useNavigate();
 
@@ -73,12 +75,25 @@ const Navbar = () => {
             </button>
           </div>
           <div className="buttons text-center">
-            <NavLink to="/login" className="btn btn-outline-dark m-2">
-              <i className="fa fa-sign-in-alt mr-1"></i> Login
-            </NavLink>
-            <NavLink to="/register" className="btn btn-outline-dark m-2">
-              <i className="fa fa-user-plus mr-1"></i> Register
-            </NavLink>
+            {loginStatus ? (
+              <>
+                <NavLink to="/profile" className="btn btn-outline-dark m-2">
+                  <i className="fa fa-user mr-1"></i> Profile
+                </NavLink>
+                <button onClick={logout} className="btn btn-outline-dark m-2">
+                  <i className="fa fa-sign-out-alt mr-1"></i> Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <NavLink to="/login" className="btn btn-outline-dark m-2">
+                  <i className="fa fa-sign-in-alt mr-1"></i> Login
+                </NavLink>
+                <NavLink to="/register" className="btn btn-outline-dark m-2">
+                  <i className="fa fa-user-plus mr-1"></i> Register
+                </NavLink>
+              </>
+            )}
             <NavLink to="/cart" className="btn btn-outline-dark m-2">
               <i className="fa fa-cart-shopping mr-1"></i> Cart ({state.length}){" "}
             </NavLink>
