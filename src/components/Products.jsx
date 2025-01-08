@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { addCart } from "../redux/action";
+import { useLocation } from "react-router-dom";
 
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import { FilterByPrice } from "../components";
+import { Dropdown } from "../components";
 
 const Products = () => {
+  const location = useLocation();
+  const [searchTerm, setSearchTerm] = useState("");
   const [data, setData] = useState([]);
   const [filter, setFilter] = useState(data);
   const [loading, setLoading] = useState(false);
@@ -19,14 +24,38 @@ const Products = () => {
   const addProduct = (product) => {
     dispatch(addCart(product));
   };
+  // Ham tim kiem san pham theo ten
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const searchQuery = params.get("search") || "";
+    setSearchTerm(searchQuery);
+  }, [location.search]);
+
+  // Filter products whenever searchTerm changes
+  useEffect(() => {
+    if (searchTerm.trim()) {
+      const updatedList = data.filter((item) =>
+        item.title
+          .substring(0, 12)
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
+      );
+      setFilter(updatedList);
+    } else {
+      setFilter(data); // Reset to all products if no search term
+    }
+  }, [searchTerm, data]);
 
   useEffect(() => {
     const getProducts = async () => {
       setLoading(true);
-      const response = await fetch("https://fakestoreapi.com/products/");
+
+      const response = await fetch("../data.json");
+      // const response = await fetch("https://fakestoreapi.com/products/");
+
       if (componentMounted) {
-        setData(await response.clone().json());
-        setFilter(await response.json());
+        setData(await response?.clone()?.json());
+        setFilter(await response?.json());
         setLoading(false);
       }
 
@@ -71,10 +100,36 @@ const Products = () => {
     setFilter(updatedList);
   };
 
+  const filterProductNew = (Inew) => {
+    const updatedList = data.filter((item) => item.new === Inew);
+    setFilter(updatedList);
+  };
+
+  const filterProductsByPrice = (min, max) => {
+    const updatedList = data.filter(
+      (data) => data.price >= min && data.price <= max
+    );
+    setFilter(updatedList); // Cập nhật danh sách sản phẩm được hiển thị
+  };
+
+  const sortProductsByPrice = (order) => {
+    const sortedProducts = [...filter];
+
+    if (order === "asc") {
+      // Sắp xếp theo giá từ thấp đến cao
+      sortedProducts.sort((a, b) => a.price - b.price);
+    } else {
+      // Sắp xếp theo giá từ cao đến thấp
+      sortedProducts.sort((a, b) => b.price - a.price);
+    }
+
+    setFilter(sortedProducts);
+  };
+
   const ShowProducts = () => {
     return (
       <>
-        <div className="buttons text-center py-5">
+        <div className="buttons flex items-center text-center py-5">
           <button
             className="btn btn-outline-dark btn-sm m-2"
             onClick={() => setFilter(data)}
@@ -105,6 +160,26 @@ const Products = () => {
           >
             Electronics
           </button>
+          <button
+            className="btn btn-outline-dark btn-sm m-2"
+            onClick={() => filterProductNew(90)}
+          >
+            90%
+          </button>
+          <button
+            className="btn btn-outline-dark btn-sm m-2"
+            onClick={() => filterProductNew(95)}
+          >
+            95%
+          </button>
+          <button
+            className="btn btn-outline-dark btn-sm m-2"
+            onClick={() => filterProductNew(99)}
+          >
+            99%
+          </button>
+          <Dropdown sortProductsByPrice={sortProductsByPrice} />;
+          <FilterByPrice filterProductsByPrice={filterProductsByPrice} />
         </div>
 
         {filter.map((product) => {
@@ -131,8 +206,10 @@ const Products = () => {
                 </div>
                 <ul className="list-group list-group-flush">
                   <li className="list-group-item lead">$ {product.price}</li>
-                  {/* <li className="list-group-item">Dapibus ac facilisis in</li>
-                    <li className="list-group-item">Vestibulum at eros</li> */}
+                  <li className="list-group-item">New: {product.new} % </li>
+                  <li className="list-group-item">
+                    Category: {product.category}{" "}
+                  </li>
                 </ul>
                 <div className="card-body">
                   <Link

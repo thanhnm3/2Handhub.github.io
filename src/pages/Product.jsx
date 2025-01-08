@@ -19,21 +19,107 @@ const Product = () => {
   const addProduct = (product) => {
     dispatch(addCart(product));
   };
+  // Hàm fetchProductById sẽ tải dữ liệu từ file data.json và trả về sản phẩm theo id
+  async function fetchProductById(id) {
+    try {
+      // Tải data.json từ thư mục public
+      const response = await fetch("/data.json");
+
+      // Kiểm tra nếu phản hồi không thành công
+      if (!response.ok) {
+        throw new Error(`Failed to fetch: ${response.statusText}`);
+      }
+
+      // Chuyển đổi JSON thành object
+      const products = await response.json();
+
+      // Tìm sản phẩm theo ID (chuyển id từ string sang number để so sánh chính xác)
+      const product = products.find((product) => product.id === Number(id));
+
+      // Nếu không tìm thấy, ném lỗi
+      if (!product) {
+        throw new Error(`Product with ID ${id} not found`);
+      }
+
+      return product;
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      throw error;
+    }
+  }
+
+  // Hàm getProductsByCategory sẽ trả về danh sách sản phẩm theo category
+  async function getProductsByCategory(category) {
+    try {
+      // Bước 1: Lấy dữ liệu từ file data.json
+      const dataResponse = await fetch("/data.json");
+      const data = await dataResponse.json();
+
+      // Bước 2: Kiểm tra nếu có thuộc tính products trong data
+      if (data && Array.isArray(data)) {
+        // Bước 3: Tìm các sản phẩm có category giống với giá trị đầu vào
+        const filteredProducts = data.filter(
+          (product) => product.category === category
+        );
+
+        // Trả về các sản phẩm lọc được
+        return filteredProducts;
+      } else {
+        throw new Error("Data is not in expected format or products not found");
+      }
+    } catch (error) {
+      // Bắt lỗi và hiển thị thông báo
+      console.error("Error:", error);
+    }
+  }
+
+  // Hàm getProductsByNew sẽ trả về danh sách sản phẩm dựa trên trường "new"
+  async function getProductsByNew(isNew) {
+    try {
+      // Bước 1: Lấy dữ liệu từ file data.json
+      const dataResponse = await fetch("/data.json");
+      const data = await dataResponse.json();
+
+      // Bước 2: Kiểm tra nếu data là một mảng
+      if (data && Array.isArray(data)) {
+        // Bước 3: Lọc các sản phẩm có trường "new" giống với giá trị đầu vào
+        const filteredProducts = data.filter(
+          (product) => product.new === isNew
+        );
+
+        // Trả về các sản phẩm lọc được
+        return filteredProducts;
+      } else {
+        throw new Error("Data is not in expected format or products not found");
+      }
+    } catch (error) {
+      // Bắt lỗi và hiển thị thông báo
+      console.error("Error:", error);
+    }
+  }
 
   useEffect(() => {
     const getProduct = async () => {
       setLoading(true);
       setLoading2(true);
-      const response = await fetch(`https://fakestoreapi.com/products/${id}`);
-      const data = await response.json();
+      const response = await fetchProductById(id);
+      const data = response;
+
       setProduct(data);
       setLoading(false);
-      const response2 = await fetch(
-        `https://fakestoreapi.com/products/category/${data.category}`
-      );
-      const data2 = await response2.json();
+
+      const response2 = await getProductsByCategory(data.category);
+      const data2 = response2;
+
       setSimilarProducts(data2);
       setLoading2(false);
+
+      // const response3 = await getProductsByNew(data.new);
+      // const data3 = response3;
+      // setProduct(data3);
+      // setLoading(false);
+
+      // console.log("New Products from data3:", data3);
     };
     getProduct();
   }, [id]);
@@ -175,12 +261,8 @@ const Product = () => {
         <div className="row">{loading ? <Loading /> : <ShowProduct />}</div>
         <div className="row my-5 py-5">
           <div className="d-none d-md-block">
-          <h2 className="">You may also Like</h2>
-            <Marquee
-              pauseOnHover={true}
-              pauseOnClick={true}
-              speed={50}
-            >
+            <h2 className="">You may also Like</h2>
+            <Marquee pauseOnHover={true} pauseOnClick={true} speed={50}>
               {loading2 ? <Loading2 /> : <ShowSimilarProduct />}
             </Marquee>
           </div>
